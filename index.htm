@@ -1,10 +1,58 @@
 <html>
   <head>
     <title>Video stream sample</title>
+    <style>
+      video {
+        width: 700px;
+      }
+    </style>
   </head>
-  <body>
-    <video id="videoPlayer" controls muted="muted" autoplay> 
-      <source src="/video" type="video/mp4">
-    </video>
+  <body onload="initialise()">
+    <script>
+      const xhttp = new XMLHttpRequest();
+      let videoPlayer = null;
+      let timestamp = null;
+
+      function initialise() {
+        console.log(window.location.search);
+        videoPlayer = document.getElementById("videoPlayer");
+        videoPlayer.addEventListener('loadedmetadata', function () {
+          videoPlayer.currentTime = (Date.now() - timestamp)/1000;
+          setTimeout(function () {
+            videoPlayer.play();
+          })
+        });
+
+        play();
+      }
+
+      function play() {
+        xhttp.onreadystatechange = function() {
+          if (this.readyState === 4 && this.status === 200) {
+            const response = JSON.parse(this.responseText);
+            timestamp = response.timestamp;
+
+            const source = document.createElement('source');
+            source.src = '/video';
+            source.type = 'video/mp4';
+            videoPlayer.appendChild(source);
+          }
+        };
+        xhttp.open("GET", "/timestamp", true);
+        xhttp.send();
+      }
+
+      function restart() {
+        xhttp.onreadystatechange = function() {
+          if (this.readyState === 4 && this.status === 200) {
+            location.reload();
+          }
+        };
+        xhttp.open("GET", "/restart", true);
+        xhttp.send();
+      }
+    </script>
+    <video id="videoPlayer" autoplay muted loop></video>
+    <button onclick="restart()">Restart</button>
   </body>
 </html>
